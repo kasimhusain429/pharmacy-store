@@ -112,3 +112,45 @@ body {
   background: #10b981;
 }
 
+/* Preloader custom keyframes */
+@keyframes progressShimmer {
+  0% {
+    transform: translateX(-150%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+.animate-progress-shimmer {
+  animation: progressShimmer 1.8s infinite linear;
+}
+
+@keyframes floatMote {
+  0% {
+    transform: translateY(0px) translateX(0px);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.8;
+  }
+  80% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-80px) translateX(15px);
+    opacity: 0;
+  }
+}
+
+.animate-mote-1 {
+  animation: floatMote 4s infinite ease-out;
+}
+
+.animate-mote-2 {
+  animation: floatMote 5.5s infinite ease-out 1.2s;
+}
+
+.animate-mote-3 {
+  animation: floatMote 6s infinite ease-out 2.4s;
+}

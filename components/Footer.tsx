@@ -15,9 +15,10 @@ import {
 
 interface FooterProps {
   onOpenPrescriptionModal?: () => void;
+  onReplayPreloader?: () => void;
 }
 
-export default function Footer({ onOpenPrescriptionModal }: FooterProps) {
+export default function Footer({ onOpenPrescriptionModal, onReplayPreloader }: FooterProps) {
   const handleOpenStudioPrompts = () => {
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("open-video-prompts", { detail: { scene: "hero" } }));
@@ -176,16 +177,27 @@ export default function Footer({ onOpenPrescriptionModal }: FooterProps) {
             <span className="font-semibold text-white mt-0.5 block">1-800-PHARMACY (24/7)</span>
           </div>
 
-          {/* Discreet Studio Prompts Trigger for Creator Workflow */}
-          <div className="pt-2">
+          {/* Discreet Studio Prompts Trigger for Creator Workflow & Preloader Replay */}
+          <div className="pt-2 flex flex-wrap items-center gap-3">
             <button
               onClick={handleOpenStudioPrompts}
               className="inline-flex items-center gap-1.5 text-[11px] font-mono text-zinc-400 hover:text-emerald-300 transition-colors cursor-pointer group"
               title="Access solid green screen video generation prompts"
             >
               <Film className="w-3.5 h-3.5 text-emerald-500/70 group-hover:text-emerald-400" />
-              <span>Studio Chroma Assets Hub</span>
+              <span>Studio Chroma Hub</span>
             </button>
+
+            {onReplayPreloader && (
+              <button
+                onClick={onReplayPreloader}
+                className="inline-flex items-center gap-1.5 text-[11px] font-mono text-zinc-400 hover:text-emerald-300 transition-colors cursor-pointer group"
+                title="Replay the HealthPlus luxury preloader"
+              >
+                <Award className="w-3.5 h-3.5 text-emerald-500/70 group-hover:text-emerald-400" />
+                <span>Replay Preloader</span>
+              </button>
+            )}
           </div>
         </div>
 

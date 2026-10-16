@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Preloader from "@/components/Preloader";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import PrescriptionFlipSection from "@/components/PrescriptionFlipSection";
@@ -15,6 +16,7 @@ export default function Home() {
   const [prescriptionModalOpen, setPrescriptionModalOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [activeTimeline, setActiveTimeline] = useState<string>("dawn");
+  const [isPreloading, setIsPreloading] = useState(true);
 
   const handleAddToCart = (productTitle: string, price: number) => {
     setCartCount((prev) => prev + 1);
@@ -22,6 +24,11 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-[#06110f] text-slate-100 flex flex-col relative selection:bg-emerald-500 selection:text-slate-950">
+      {/* Premium Reference Preloader with Smooth Transition */}
+      {isPreloading && (
+        <Preloader onComplete={() => setIsPreloading(false)} />
+      )}
+
       {/* Top Pharmacy Navigation */}
       <Navbar 
         onOpenPrescriptionModal={() => setPrescriptionModalOpen(true)}
@@ -61,6 +68,7 @@ export default function Home() {
       {/* Clinical Accreditation & Pharmacy Footer */}
       <Footer 
         onOpenPrescriptionModal={() => setPrescriptionModalOpen(true)} 
+        onReplayPreloader={() => setIsPreloading(true)}
       />
 
       {/* Prescription Upload & Verification Modal */}
