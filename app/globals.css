@@ -18,6 +18,11 @@ body {
   overflow-x: hidden;
   selection-background-color: #10b981;
   selection-color: #070a0c;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, a {
+  touch-action: manipulation;
 }
 
 /* Custom glow and glass utilities */

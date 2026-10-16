@@ -23,6 +23,43 @@ const MILESTONES = [
   { id: 3, label: "ALMOST THERE", threshold: 100, icon: UserCheck },
 ];
 
+const CRITICAL_IMAGES_PHASE1 = [
+  "/preloader_clean_bg.jpg",
+  "/blister_pack_macro.jpg", // Critical centerpiece of Section 2
+];
+
+const CRITICAL_IMAGES_PHASE2 = [
+  "/dr_sarah_chen.jpg",
+  "/consultation_apothecary_bg.jpg",
+  "/closing_hero_pedestal.jpg",
+  "/pill_organizer_poster.jpg",
+  "/doctor_portrait.jpg",
+  "/prod_thermometer.jpg",
+  "/prod_dropper.jpg",
+  "/prod_balm.jpg",
+  "/prod_cream.jpg",
+  "/prod_bp_monitor.jpg"
+];
+
+const preloadAndDecodeImage = (src: string): Promise<void> => {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined") {
+      resolve();
+      return;
+    }
+    const img = new window.Image();
+    img.src = src;
+    if (typeof img.decode === "function") {
+      img.decode()
+        .then(() => resolve())
+        .catch(() => resolve());
+    } else {
+      (img as HTMLImageElement).onload = () => resolve();
+      (img as HTMLImageElement).onerror = () => resolve();
+    }
+  });
+};
+
 export default function Preloader({ onComplete }: PreloaderProps) {
   const [progress, setProgress] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
@@ -32,44 +69,87 @@ export default function Preloader({ onComplete }: PreloaderProps) {
     // Prevent scrolling during preloader
     document.body.style.overflow = "hidden";
 
-    // Natural deceleration loading simulation curve
-    let current = 0;
-    const interval = setInterval(() => {
-      // Fast initial load, steady midpoint, quick final confirmation
-      let increment = 1.2;
-      if (current < 30) {
-        increment = 2.2;
-      } else if (current < 65) {
-        increment = 1.5;
-      } else if (current < 88) {
-        increment = 1.1;
-      } else if (current < 99) {
-        increment = 0.8;
+    let targetProgress = 15;
+    let currentProgress = 0;
+    let animId: number;
+    let isCancelled = false;
+
+    // Smooth visual interpolation loop
+    const updateProgress = () => {
+      if (isCancelled) return;
+
+      const delta = targetProgress - currentProgress;
+      // Smooth natural lerp towards target
+      if (delta > 0.1) {
+        currentProgress += Math.min(Math.max(delta * 0.12, 0.4), 2.5);
       } else {
-        increment = 1.0;
+        currentProgress = targetProgress;
       }
 
-      current = Math.min(current + increment, 100);
-      setProgress(current);
+      setProgress(Math.min(currentProgress, 100));
 
-      if (current >= 100) {
-        clearInterval(interval);
+      if (currentProgress >= 100) {
         setIsReady(true);
-
-        // Smooth transition hold: let user register 100% completion
         setTimeout(() => {
+          if (isCancelled) return;
           setIsExiting(true);
-          // Allow exit animation to play smoothly before calling onComplete
           setTimeout(() => {
             document.body.style.overflow = "";
             onComplete();
-          }, 700);
-        }, 350);
+          }, 650);
+        }, 300);
+        return;
       }
-    }, 28);
+
+      animId = requestAnimationFrame(updateProgress);
+    };
+
+    animId = requestAnimationFrame(updateProgress);
+
+    // Orchestrated parallel asset pre-decoding and system initialization
+    const initializeAssets = async () => {
+      try {
+        // Milestone 0 -> 1: Fonts & DOM readiness
+        if (typeof document !== "undefined" && "fonts" in document) {
+          await document.fonts.ready;
+        }
+        targetProgress = Math.max(targetProgress, 35);
+
+        // Milestone 1 -> 2: Section 2 Blister Pack Macro + Hero Background
+        await Promise.all(CRITICAL_IMAGES_PHASE1.map(preloadAndDecodeImage));
+        targetProgress = Math.max(targetProgress, 65);
+
+        // Milestone 2 -> 3: Secondary clinic & catalog assets
+        await Promise.all(CRITICAL_IMAGES_PHASE2.map(preloadAndDecodeImage));
+        targetProgress = Math.max(targetProgress, 88);
+
+        // Milestone 3 -> 4: Three.js WebGL Pre-warming verification
+        let threeReady = false;
+        const onHeroReady = () => {
+          threeReady = true;
+          targetProgress = 100;
+        };
+
+        window.addEventListener("pharmacy-hero-ready", onHeroReady, { once: true });
+
+        // Safety fallback timer so slow connections never hang
+        setTimeout(() => {
+          if (!threeReady) {
+            targetProgress = 100;
+          }
+        }, 1200);
+
+      } catch (err) {
+        console.warn("Preloader asset initialization fallback:", err);
+        targetProgress = 100;
+      }
+    };
+
+    initializeAssets();
 
     return () => {
-      clearInterval(interval);
+      isCancelled = true;
+      cancelAnimationFrame(animId);
       document.body.style.overflow = "";
     };
   }, [onComplete]);
@@ -82,7 +162,7 @@ export default function Preloader({ onComplete }: PreloaderProps) {
     setTimeout(() => {
       document.body.style.overflow = "";
       onComplete();
-    }, 400);
+    }, 350);
   };
 
   // Determine current active milestone index
