@@ -1,6 +1,6 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# Dependencies
 /node_modules
 /.pnp
 .pnp.*
@@ -10,32 +10,86 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
-
-# next.js
+# Next.js build & production outputs
 /.next/
 /out/
+/build/
+/dist/
 
-# production
-/build
+# TypeScript build caches
+*.tsbuildinfo
+next-env.d.ts
 
-# misc
-.DS_Store
+# Scratch, temporary processing & extracted video frames
+/scratch/
+/tmp/
+/temp/
+*.tmp
+*.temp
+
+# Large raw reference video / capture inputs in root (preserves /public web assets)
+/*.mp4
+/*.mov
+/*.avi
+/*.mkv
+WhatsApp Video*.mp4
+Pill_organizer_lids_opening*.mp4
+!/public/**
+
+# Python bytecode & cache (from rendering scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Environment files & secrets
+.env
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
 *.pem
+*.key
+*.cert
 
-# debug
+# Vercel
+.vercel
+
+# Testing & Coverage
+/coverage/
+/.nyc_output/
+
+# Logs & Debug
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Thumbs.db:encryptable
+Desktop.ini
 
-# vercel
-.vercel
+# IDE & Editor Settings
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
