@@ -320,7 +320,7 @@ export default function HeroScene({ onCapsuleClick }: HeroSceneProps) {
     mainGroup.add(capsulesRoot);
 
     const capsulesData: DynamicCapsule[] = [];
-    const totalCapsules = isMobile ? 8 : 12;
+    const totalCapsules = 12;
 
     // Leftward angles matching the reference image
     const referenceTiltAngles = [
@@ -533,16 +533,12 @@ export default function HeroScene({ onCapsuleClick }: HeroSceneProps) {
       renderer.render(scene, camera);
     };
 
-    // Pre-compile and pre-warm shaders so WebGL initialization is 100% complete during preloader
+    // Pre-compile all WebGL shaders and materials upfront during preloading to eliminate first-frame lag
     try {
       renderer.compile(scene, camera);
       renderer.render(scene, camera);
     } catch (e) {
-      console.warn("Shader pre-warm note:", e);
-    }
-
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("pharmacy-hero-ready"));
+      console.warn("Shader warm-up notice:", e);
     }
 
     animId = requestAnimationFrame(animate);

@@ -23,42 +23,14 @@ const MILESTONES = [
   { id: 3, label: "ALMOST THERE", threshold: 100, icon: UserCheck },
 ];
 
-const CRITICAL_IMAGES_PHASE1 = [
+const CRITICAL_IMAGES = [
+  "/blister_pack_macro.jpg",
   "/preloader_clean_bg.jpg",
-  "/blister_pack_macro.jpg", // Critical centerpiece of Section 2
-];
-
-const CRITICAL_IMAGES_PHASE2 = [
-  "/dr_sarah_chen.jpg",
-  "/consultation_apothecary_bg.jpg",
-  "/closing_hero_pedestal.jpg",
   "/pill_organizer_poster.jpg",
-  "/doctor_portrait.jpg",
-  "/prod_thermometer.jpg",
-  "/prod_dropper.jpg",
-  "/prod_balm.jpg",
-  "/prod_cream.jpg",
-  "/prod_bp_monitor.jpg"
+  "/consultation_apothecary_bg.jpg",
+  "/dr_sarah_chen.jpg",
+  "/closing_hero_pedestal.jpg"
 ];
-
-const preloadAndDecodeImage = (src: string): Promise<void> => {
-  return new Promise((resolve) => {
-    if (typeof window === "undefined") {
-      resolve();
-      return;
-    }
-    const img = new window.Image();
-    img.src = src;
-    if (typeof img.decode === "function") {
-      img.decode()
-        .then(() => resolve())
-        .catch(() => resolve());
-    } else {
-      (img as HTMLImageElement).onload = () => resolve();
-      (img as HTMLImageElement).onerror = () => resolve();
-    }
-  });
-};
 
 export default function Preloader({ onComplete }: PreloaderProps) {
   const [progress, setProgress] = useState(0);
@@ -69,87 +41,89 @@ export default function Preloader({ onComplete }: PreloaderProps) {
     // Prevent scrolling during preloader
     document.body.style.overflow = "hidden";
 
-    let targetProgress = 15;
-    let currentProgress = 0;
-    let animId: number;
     let isCancelled = false;
+    let assetsLoadedCount = 0;
+    const totalAssets = CRITICAL_IMAGES.length + 1; // images + video
 
-    // Smooth visual interpolation loop
-    const updateProgress = () => {
-      if (isCancelled) return;
+    // 1. Preload and decode critical images for instant zero-lag rendering
+    CRITICAL_IMAGES.forEach((src) => {
+      const img = new window.Image();
+      img.src = src;
+      const onDone = () => {
+        if (!isCancelled) {
+          assetsLoadedCount++;
+        }
+      };
 
-      const delta = targetProgress - currentProgress;
-      // Smooth natural lerp towards target
-      if (delta > 0.1) {
-        currentProgress += Math.min(Math.max(delta * 0.12, 0.4), 2.5);
+      if (typeof img.decode === "function") {
+        img.decode().then(onDone).catch(onDone);
       } else {
-        currentProgress = targetProgress;
+        img.onload = onDone;
+        img.onerror = onDone;
+      }
+    });
+
+    // 2. Preload video buffer
+    try {
+      const video = document.createElement("video");
+      video.preload = "auto";
+      video.src = "/pill_organizer_clean.mp4";
+      video.muted = true;
+      const onVideoDone = () => {
+        if (!isCancelled) assetsLoadedCount++;
+      };
+      video.onloadeddata = onVideoDone;
+      video.onerror = onVideoDone;
+      setTimeout(onVideoDone, 1200); // safety fallback
+    } catch {
+      assetsLoadedCount++;
+    }
+
+    // 3. Smooth progress interpolation driven by real asset completion + timing
+    let current = 0;
+    const startTime = performance.now();
+    const minDuration = 1800; // 1.8s minimum presentation for clean branded onboarding
+
+    const interval = setInterval(() => {
+      const elapsed = performance.now() - startTime;
+      const timeRatio = Math.min(elapsed / minDuration, 1);
+      const assetRatio = Math.min(assetsLoadedCount / totalAssets, 1);
+
+      // Blended progress target (50% real asset load, 50% smooth natural time)
+      const targetProgress = Math.min(Math.floor((assetRatio * 0.55 + timeRatio * 0.45) * 100), 100);
+
+      // Increment smoothly toward target
+      if (current < targetProgress) {
+        current = Math.min(current + (targetProgress - current) * 0.35 + 0.8, 100);
+      } else if (current < 99 && timeRatio < 1) {
+        current = Math.min(current + 0.5, 99);
       }
 
-      setProgress(Math.min(currentProgress, 100));
+      setProgress(current);
 
-      if (currentProgress >= 100) {
+      if (current >= 100 && (assetsLoadedCount >= totalAssets || elapsed >= minDuration)) {
+        clearInterval(interval);
         setIsReady(true);
+
+        // Smooth transition hold: let user register 100% completion
         setTimeout(() => {
-          if (isCancelled) return;
           setIsExiting(true);
+          // Signal to application that all assets are warm and ready
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("pharmacy-app-ready"));
+          }
+          // Allow exit animation to play smoothly before calling onComplete
           setTimeout(() => {
             document.body.style.overflow = "";
             onComplete();
           }, 650);
         }, 300);
-        return;
       }
-
-      animId = requestAnimationFrame(updateProgress);
-    };
-
-    animId = requestAnimationFrame(updateProgress);
-
-    // Orchestrated parallel asset pre-decoding and system initialization
-    const initializeAssets = async () => {
-      try {
-        // Milestone 0 -> 1: Fonts & DOM readiness
-        if (typeof document !== "undefined" && "fonts" in document) {
-          await document.fonts.ready;
-        }
-        targetProgress = Math.max(targetProgress, 35);
-
-        // Milestone 1 -> 2: Section 2 Blister Pack Macro + Hero Background
-        await Promise.all(CRITICAL_IMAGES_PHASE1.map(preloadAndDecodeImage));
-        targetProgress = Math.max(targetProgress, 65);
-
-        // Milestone 2 -> 3: Secondary clinic & catalog assets
-        await Promise.all(CRITICAL_IMAGES_PHASE2.map(preloadAndDecodeImage));
-        targetProgress = Math.max(targetProgress, 88);
-
-        // Milestone 3 -> 4: Three.js WebGL Pre-warming verification
-        let threeReady = false;
-        const onHeroReady = () => {
-          threeReady = true;
-          targetProgress = 100;
-        };
-
-        window.addEventListener("pharmacy-hero-ready", onHeroReady, { once: true });
-
-        // Safety fallback timer so slow connections never hang
-        setTimeout(() => {
-          if (!threeReady) {
-            targetProgress = 100;
-          }
-        }, 1200);
-
-      } catch (err) {
-        console.warn("Preloader asset initialization fallback:", err);
-        targetProgress = 100;
-      }
-    };
-
-    initializeAssets();
+    }, 25);
 
     return () => {
       isCancelled = true;
-      cancelAnimationFrame(animId);
+      clearInterval(interval);
       document.body.style.overflow = "";
     };
   }, [onComplete]);
@@ -159,6 +133,9 @@ export default function Preloader({ onComplete }: PreloaderProps) {
     setProgress(100);
     setIsReady(true);
     setIsExiting(true);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("pharmacy-app-ready"));
+    }
     setTimeout(() => {
       document.body.style.overflow = "";
       onComplete();
