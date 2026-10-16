@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { 
   Sun, 
@@ -15,7 +15,9 @@ import {
   Clock,
   Layers,
   ShieldCheck,
-  Pill
+  Pill,
+  Play,
+  Pause
 } from "lucide-react";
 
 interface DailyRoutineSectionProps {
@@ -58,8 +60,80 @@ export default function DailyRoutineSection({
   const [selectedDay, setSelectedDay] = useState<number>(0);
   const [internalTime, setInternalTime] = useState<string>("dawn");
   const [scienceModalOpen, setScienceModalOpen] = useState(false);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [playbackError, setPlaybackError] = useState(false);
+  
+  const sectionRef = useRef<HTMLElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const activeTimeline = externalTime || internalTime;
+
+  // Video Autoplay and Performance Observer Setup
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Strict browser mobile autoplay compliance: defaultMuted and muted in DOM properties
+    video.muted = true;
+    video.defaultMuted = true;
+    video.playsInline = true;
+    video.setAttribute("muted", "");
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
+
+    const playVideo = async () => {
+      try {
+        await video.play();
+        setIsVideoPlaying(true);
+        setPlaybackError(false);
+      } catch (err) {
+        console.warn("Autoplay deferred or blocked by browser policy:", err);
+        setIsVideoPlaying(false);
+        setPlaybackError(true);
+      }
+    };
+
+    // Pause video when out of viewport to optimize mobile CPU & battery
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            playVideo();
+          } else {
+            video.pause();
+            setIsVideoPlaying(false);
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    // Initial attempt
+    playVideo();
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  const toggleVideoPlayback = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (video.paused) {
+      video.play().then(() => {
+        setIsVideoPlaying(true);
+        setPlaybackError(false);
+      }).catch((e) => console.warn("Manual play error:", e));
+    } else {
+      video.pause();
+      setIsVideoPlaying(false);
+    }
+  };
 
   const handleTimelineClick = (id: string) => {
     setInternalTime(id);
@@ -78,15 +152,16 @@ export default function DailyRoutineSection({
 
   return (
     <section 
+      ref={sectionRef}
       id="editorial-routine" 
-      className="relative w-full min-h-screen py-20 px-4 sm:px-8 lg:px-16 bg-[#eef4f0] text-slate-800 overflow-hidden flex flex-col justify-between selection:bg-emerald-500 selection:text-white"
+      className="relative w-full min-h-screen py-14 sm:py-20 px-4 sm:px-8 lg:px-16 bg-[#eef4f0] text-slate-800 overflow-hidden flex flex-col justify-between selection:bg-emerald-500 selection:text-white"
     >
       {/* 1. FAINT WATERMARK NUMERALS: 7 on Left, 365 on Right (Exact match from Reference Video & Image) */}
       <div className="absolute inset-0 pointer-events-none select-none overflow-hidden flex items-center justify-between z-0">
-        <span className="text-[180px] sm:text-[260px] md:text-[340px] lg:text-[420px] font-black tracking-tighter text-emerald-950/[0.045] leading-none -translate-x-12 sm:-translate-x-16">
+        <span className="text-[140px] sm:text-[240px] md:text-[340px] lg:text-[420px] font-black tracking-tighter text-emerald-950/[0.045] leading-none -translate-x-8 sm:-translate-x-16">
           7
         </span>
-        <span className="text-[180px] sm:text-[260px] md:text-[340px] lg:text-[420px] font-black tracking-tighter text-emerald-950/[0.045] leading-none translate-x-12 sm:translate-x-16">
+        <span className="text-[140px] sm:text-[240px] md:text-[340px] lg:text-[420px] font-black tracking-tighter text-emerald-950/[0.045] leading-none translate-x-8 sm:translate-x-16">
           365
         </span>
       </div>
@@ -94,66 +169,84 @@ export default function DailyRoutineSection({
       <div className="max-w-7xl mx-auto w-full relative z-10 flex flex-col justify-between flex-1">
         
         {/* Top Header Row */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pt-4 pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4 pt-2 sm:pt-4 pb-4 sm:pb-6">
           <div>
-            <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-emerald-800 uppercase">
+            <div className="flex items-center gap-2 text-[11px] sm:text-xs font-semibold tracking-wider text-emerald-800 uppercase">
               <span className="w-2 h-2 rounded-full bg-emerald-600" />
               <span>Chronobiological Dispensing</span>
             </div>
-            <h2 className="text-3xl sm:text-5xl lg:text-6xl font-serif font-black tracking-tight text-slate-900 mt-1">
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-serif font-black tracking-tight text-slate-900 mt-1">
               The Daily Routine
             </h2>
-            <p className="text-xs sm:text-sm text-slate-600 mt-2 max-w-xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-600 mt-1.5 max-w-xl leading-relaxed">
               Precision unit-dose scheduling. Select any day or circadian window to preview your personalized medication schedule.
             </p>
           </div>
 
           <div className="flex items-center gap-2 self-start sm:self-auto">
-            <span className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-100/80 text-emerald-900 border border-emerald-200/80 shadow-2xs">
+            <span className="px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold bg-emerald-100/80 text-emerald-900 border border-emerald-200/80 shadow-2xs">
               7-Day Calibrated Trays
             </span>
           </div>
         </div>
 
         {/* Center Stage: Translucent Mint-Green 7-Day Pill Organizer + Information Cards */}
-        <div className="relative my-auto py-4 flex flex-col items-center justify-center">
+        <div className="relative my-auto py-2 sm:py-4 flex flex-col items-center justify-center">
           
           {/* Main 3D Pill Organizer Presentation Container */}
           <div className="relative w-full max-w-4xl flex flex-col items-center justify-center">
             
             {/* Video Presentation Layer */}
-            <div className="relative w-full max-w-3xl aspect-[16/9] flex items-center justify-center group overflow-hidden rounded-3xl">
+            <div 
+              onClick={toggleVideoPlayback}
+              className="relative w-full max-w-3xl aspect-[16/9] flex items-center justify-center group overflow-hidden rounded-3xl cursor-pointer"
+            >
               
-              {/* HTML5 Clean Transparent Video Player */}
+              {/* HTML5 Clean Universal H.264 Video Player */}
               <video
+                ref={videoRef}
                 autoPlay
                 loop
                 muted
                 playsInline
-                className="w-full h-full object-contain pointer-events-none drop-shadow-[0_20px_35px_rgba(6,30,22,0.12)] transition-transform duration-700 group-hover:scale-[1.02]"
+                poster="/pill_organizer_poster.jpg"
+                className="w-full h-full object-contain pointer-events-none drop-shadow-[0_20px_35px_rgba(6,30,22,0.12)] transition-transform duration-700 group-hover:scale-[1.01]"
               >
-                <source src="/pill_organizer_transparent.webm" type="video/webm" />
                 <source src="/pill_organizer_clean.mp4" type="video/mp4" />
+                <source src="/pill_organizer_transparent.webm" type="video/webm" />
                 Your browser does not support HTML5 video playback.
               </video>
 
+              {/* Gentle Play/Pause Indicator if user wants manual control or autoplay was blocked */}
+              {(!isVideoPlaying || playbackError) && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/15 backdrop-blur-[2px] transition-opacity z-15 pointer-events-none">
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/95 text-slate-900 text-xs font-semibold shadow-lg">
+                    <Play className="w-4 h-4 fill-emerald-600 text-emerald-600" />
+                    <span>Tap to Play Animation</span>
+                  </div>
+                </div>
+              )}
+
               {/* Clickable Interactive Hotspots for the 7 Compartments (Mon-Sun) */}
-              <div className="absolute inset-x-8 sm:inset-x-14 bottom-10 sm:bottom-16 top-16 sm:top-24 grid grid-cols-7 gap-1 z-20 pointer-events-auto">
+              <div 
+                onClick={(e) => e.stopPropagation()}
+                className="absolute inset-x-3 sm:inset-x-8 md:inset-x-12 bottom-4 sm:bottom-10 md:bottom-14 top-10 sm:top-18 md:top-22 grid grid-cols-7 gap-1 z-20 pointer-events-auto"
+              >
                 {WEEK_DAYS.map((day, idx) => (
                   <button
                     key={day.day}
                     onClick={() => setSelectedDay(idx)}
-                    className={`h-full rounded-xl transition-all flex flex-col justify-end p-2 sm:p-3 relative group/slot cursor-pointer ${
+                    className={`h-full rounded-xl transition-colors flex flex-col justify-end p-1 sm:p-2 md:p-3 relative group/slot cursor-pointer ${
                       selectedDay === idx 
                         ? "bg-emerald-500/15 border-2 border-emerald-500/60 shadow-lg shadow-emerald-500/10" 
                         : "hover:bg-emerald-500/10 border border-transparent"
                     }`}
                     title={`Day ${idx + 1}: ${day.day} (Click to inspect)`}
                   >
-                    <span className={`text-[10px] sm:text-xs font-bold tracking-tight px-1.5 py-0.5 rounded-md ${
+                    <span className={`text-[9px] sm:text-xs font-bold tracking-tight px-1 sm:px-1.5 py-0.5 rounded-md text-center ${
                       selectedDay === idx 
                         ? "bg-emerald-600 text-white shadow-xs" 
-                        : "bg-white/80 text-slate-700 group-hover/slot:bg-emerald-100"
+                        : "bg-white/85 text-slate-700 group-hover/slot:bg-emerald-100"
                     }`}>
                       {day.dayShort}
                     </span>
@@ -214,17 +307,17 @@ export default function DailyRoutineSection({
         </div>
 
         {/* 3. BOTTOM TIMELINE / DOSAGE SLIDER BAR (Exact match from Reference Video & Image) */}
-        <div className="w-full max-w-3xl mx-auto pt-4 pb-2 z-20">
+        <div className="w-full max-w-3xl mx-auto pt-3 sm:pt-4 pb-2 z-20">
           
           {/* Timeline Bar Track */}
-          <div className="relative flex items-center justify-between py-6">
+          <div className="relative flex items-center justify-between py-4 sm:py-6">
             
             {/* Gray Track Line */}
-            <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-slate-300 -translate-y-1/2 z-0" />
+            <div className="absolute top-1/2 left-3 sm:left-4 right-3 sm:right-4 h-0.5 bg-slate-300 -translate-y-1/2 z-0" />
             
             {/* Active Golden Progress Line */}
             <div 
-              className="absolute top-1/2 left-4 h-0.5 bg-amber-400 -translate-y-1/2 transition-all duration-500 z-0" 
+              className="absolute top-1/2 left-3 sm:left-4 h-0.5 bg-amber-400 -translate-y-1/2 transition-all duration-500 z-0" 
               style={{ width: getSliderPosition() }}
             />
 
@@ -240,22 +333,22 @@ export default function DailyRoutineSection({
                   className="relative z-10 flex flex-col items-center group cursor-pointer"
                 >
                   {/* Glowing Node Halo */}
-                  <div className={`flex items-center justify-center w-9 h-9 sm:w-11 sm:h-11 rounded-full transition-all duration-300 ${
+                  <div className={`flex items-center justify-center w-8 h-8 sm:w-11 sm:h-11 rounded-full transition-all duration-300 ${
                     isCurrent 
-                      ? "bg-amber-100 text-amber-600 shadow-md ring-4 ring-amber-300/40 scale-110" 
+                      ? "bg-amber-100 text-amber-600 shadow-md ring-3 sm:ring-4 ring-amber-300/40 scale-105 sm:scale-110" 
                       : "bg-white text-slate-400 hover:text-slate-700 hover:bg-slate-50 shadow-sm"
                   }`}>
-                    <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <Icon className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
                   </div>
 
                   {/* Node Label (Dawn, Noon, Dusk, Night) */}
-                  <div className="mt-2 text-center">
-                    <span className={`block text-xs sm:text-sm font-semibold transition-colors ${
+                  <div className="mt-1.5 sm:mt-2 text-center">
+                    <span className={`block text-[11px] sm:text-sm font-semibold transition-colors ${
                       isCurrent ? "text-slate-900" : "text-slate-400 group-hover:text-slate-600"
                     }`}>
                       {step.label}
                     </span>
-                    <span className="block text-[10px] text-slate-400">
+                    <span className="block text-[8px] sm:text-[10px] text-slate-400">
                       {step.time}
                     </span>
                   </div>
@@ -265,12 +358,12 @@ export default function DailyRoutineSection({
           </div>
 
           {/* Active Dose Micro-Bar */}
-          <div className="mt-2 text-center text-xs text-slate-500 flex items-center justify-center gap-3">
-            <span className="flex items-center gap-1.5 font-medium text-slate-700">
-              <Clock className="w-3.5 h-3.5 text-emerald-600" />
-              Showing regimen for: <strong className="text-emerald-800 capitalize">{activeTimeline}</strong>
+          <div className="mt-1 sm:mt-2 text-center text-[10px] sm:text-xs text-slate-500 flex flex-wrap items-center justify-center gap-1.5 sm:gap-3">
+            <span className="flex items-center gap-1 sm:gap-1.5 font-medium text-slate-700">
+              <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-600" />
+              <span>Regimen: <strong className="text-emerald-800 capitalize">{activeTimeline}</strong></span>
             </span>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <span>{WEEK_DAYS[selectedDay].day}: {WEEK_DAYS[selectedDay].dosage}</span>
           </div>
 

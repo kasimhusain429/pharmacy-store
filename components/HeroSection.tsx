@@ -25,7 +25,7 @@ export default function HeroSection({ onOpenPrescriptionModal }: HeroSectionProp
   return (
     <section 
       id="hero" 
-      className="relative h-screen max-h-screen w-full flex flex-col justify-between pt-16 pb-4 px-4 sm:px-8 lg:px-12 overflow-hidden bg-[#06110f] select-none"
+      className="relative min-h-screen lg:h-screen lg:max-h-screen w-full flex flex-col justify-between pt-20 pb-4 px-4 sm:px-8 lg:px-12 overflow-hidden bg-[#06110f] select-none"
     >
       {/* 1. Cinematic Botanical Hero Background Image (Matching Reference) */}
       <div 
@@ -40,10 +40,10 @@ export default function HeroSection({ onOpenPrescriptionModal }: HeroSectionProp
       <div className="absolute inset-0 bg-gradient-to-b from-[#06110f]/75 via-transparent to-[#06110f]/85 pointer-events-none" />
 
       {/* 3. Main Grid: Left Column Copy & CTAs | Right Column Interactive 3D */}
-      <div className="max-w-7xl mx-auto w-full flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center min-h-0 z-10 my-auto">
+      <div className="max-w-7xl mx-auto w-full flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center min-h-0 z-10 my-auto py-4">
         
         {/* Left Column: Editorial & Conversion Driver (5.5 Cols) */}
-        <div className="lg:col-span-5 flex flex-col justify-center gap-4 text-left py-2">
+        <div className="lg:col-span-5 flex flex-col justify-center gap-3.5 sm:gap-4 text-left py-2">
           
           {/* Top Subtitle Badge */}
           <div className="flex items-center gap-2 text-xs font-semibold tracking-wider text-emerald-400">
@@ -53,7 +53,7 @@ export default function HeroSection({ onOpenPrescriptionModal }: HeroSectionProp
 
           {/* Master Headline */}
           <div className="space-y-1">
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-[80px] font-black tracking-tight text-white leading-[0.96]">
+            <h1 className="text-4xl sm:text-6xl lg:text-7xl xl:text-[80px] font-black tracking-tight text-white leading-[0.96]">
               HEALTH, <br />
               <span className="bg-gradient-to-r from-white via-emerald-100 to-emerald-300 bg-clip-text text-transparent">
                 SORTED.

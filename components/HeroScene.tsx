@@ -46,17 +46,21 @@ export default function HeroScene({ onCapsuleClick }: HeroSceneProps) {
     // Positioned so the bottle sits naturally over the rock platform in the background
     camera.position.set(0.08, 0.40, 6.0);
 
+    const isMobile = container.clientWidth < 768;
+
     const renderer = new THREE.WebGLRenderer({
-      antialias: true,
+      antialias: !isMobile, // Fast smooth performance on mobile
       alpha: true, // Transparent so the rich botanical background image shows through
       powerPreference: "high-performance",
     });
     renderer.setSize(container.clientWidth, container.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.25;
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.enabled = !isMobile;
+    if (!isMobile) {
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    }
 
     container.appendChild(renderer.domElement);
 
@@ -67,10 +71,12 @@ export default function HeroScene({ onCapsuleClick }: HeroSceneProps) {
     // Warm Key Spotlight from top-right (matches the warm studio backlights)
     const keyLight = new THREE.DirectionalLight(0xfff5eb, 2.8);
     keyLight.position.set(3.8, 5.5, 4.0);
-    keyLight.castShadow = true;
-    keyLight.shadow.mapSize.width = 1024;
-    keyLight.shadow.mapSize.height = 1024;
-    keyLight.shadow.bias = -0.0005;
+    if (!isMobile) {
+      keyLight.castShadow = true;
+      keyLight.shadow.mapSize.width = 512;
+      keyLight.shadow.mapSize.height = 512;
+      keyLight.shadow.bias = -0.0005;
+    }
     scene.add(keyLight);
 
     // Mint/Emerald Rim Light from left (illuminates glass edge and capsules)
@@ -446,9 +452,21 @@ export default function HeroScene({ onCapsuleClick }: HeroSceneProps) {
     const clock = new THREE.Clock();
     const gravity = -1.95; // Real natural downward acceleration in slow-motion
     const fixedDt = 0.016;
+    let isVisible = true;
+    let animId: number;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry.isIntersecting;
+      },
+      { threshold: 0.05 }
+    );
+    observer.observe(container);
 
     const animate = () => {
-      requestAnimationFrame(animate);
+      animId = requestAnimationFrame(animate);
+      if (!isVisible) return; // Completely pause rendering when scrolled past hero!
+
       const elapsedTime = clock.getElapsedTime();
 
       // Smooth studio camera parallax with heavy inertia
@@ -515,10 +533,11 @@ export default function HeroScene({ onCapsuleClick }: HeroSceneProps) {
       renderer.render(scene, camera);
     };
 
-    const animId = requestAnimationFrame(animate);
+    animId = requestAnimationFrame(animate);
 
     // --- CLEANUP ---
     return () => {
+      observer.disconnect();
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", handleResize);
       container.removeEventListener("mousemove", handleMouseMove);

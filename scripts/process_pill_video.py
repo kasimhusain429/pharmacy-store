@@ -70,11 +70,15 @@ def process_video():
         # Composite onto #eef4f0
         comp = (cleaned_bgr.astype(np.float32) * alpha_f + bg_color * (1.0 - alpha_f)).astype(np.uint8)
         
-        # Also create RGBA for transparent webm
-        rgba = np.dstack([cleaned_bgr, alpha])
+        # RGBA for transparent webm (use comp as RGB so fallback without alpha is #eef4f0, NEVER green!)
+        rgba = np.dstack([comp, alpha])
         
         out_frame_path = os.path.join(temp_dir, f"frame_{frame_idx:04d}.png")
         cv2.imwrite(out_frame_path, comp)
+        
+        # Save first frame as poster
+        if frame_idx == 0:
+            cv2.imwrite("public/pill_organizer_poster.jpg", comp)
         
         # Save RGBA frames for webm
         rgba_dir = "scratch/rgba_frames"
@@ -86,11 +90,13 @@ def process_video():
     cap.release()
     print(f"Processed {frame_idx} frames. Now encoding with ffmpeg...")
     
-    # 1. Encode MP4 (Composited on #eef4f0 background, 60fps or 24fps crisp H.264)
+    # 1. Encode MP4 (Composited on #eef4f0 background, H.264 High Profile, faststart for instant streaming)
     cmd_mp4 = [
         "ffmpeg", "-y", "-framerate", str(fps),
         "-i", os.path.join(temp_dir, "frame_%04d.png"),
         "-c:v", "libx264", "-pix_fmt", "yuv420p",
+        "-profile:v", "high", "-level", "4.0",
+        "-movflags", "+faststart",
         "-crf", "18", "-preset", "fast",
         "public/pill_organizer_clean.mp4"
     ]
