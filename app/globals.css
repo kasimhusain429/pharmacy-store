@@ -1,161 +1,218 @@
 @import "tailwindcss";
 
-:root {
-  --background: #070a0c;
-  --foreground: #f1f5f9;
-  --accent-mint: #10b981;
-  --accent-mint-light: #34d399;
-  --accent-cyan: #06b6d4;
-  --amber-glass: #d97706;
-  --panel-bg: rgba(15, 23, 42, 0.65);
-  --panel-border: rgba(255, 255, 255, 0.08);
+/*
+  Pharmacy Store design tokens.
+  Palette is taken from the materials of a dispensary:
+  prescription security paper, ink, amber glass, blister foil.
+*/
+@theme {
+  --color-paper: #e6ebe3;
+  --color-paper-2: #dae1d6;
+  --color-paper-3: #c3cdbf;
+  --color-studio: #f6f6f3;
+  --color-ink: #16241e;
+  --color-ink-2: #3b4a43;
+  --color-ink-3: #56655e;
+  --color-amber: #b8661a;
+  --color-amber-deep: #8a480d;
+  --color-amber-soft: #e9c79a;
+  --color-rx: #7a2418;
+  --color-rx-soft: #f0dcd6;
+  --color-night: #101b16;
+  --color-night-2: #1a2822;
+  --color-foil: #a9ada8;
+
+  --color-band-prescriptions: #7a2418;
+  --color-band-everyday: #2f6b58;
+  --color-band-vitamins: #b9831c;
+  --color-band-skincare: #86769f;
+  --color-band-devices: #4f5d66;
+
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+
+  /* Perfect-fourth scale on a 16px base */
+  --text-2xs: 0.75rem;
+  --text-2xs--line-height: 1.35;
+  --text-xs: 0.844rem;
+  --text-xs--line-height: 1.4;
+  --text-sm: 0.938rem;
+  --text-sm--line-height: 1.5;
+  --text-base: 1rem;
+  --text-base--line-height: 1.6;
+  --text-lg: 1.333rem;
+  --text-lg--line-height: 1.4;
+  --text-xl: 1.777rem;
+  --text-xl--line-height: 1.2;
+  --text-2xl: 2.369rem;
+  --text-2xl--line-height: 1.1;
+  --text-3xl: 3.157rem;
+  --text-3xl--line-height: 1.02;
+  --text-4xl: 4.209rem;
+  --text-4xl--line-height: 0.98;
+  --text-5xl: 5.61rem;
+  --text-5xl--line-height: 0.95;
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
 }
 
-body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif);
-  overflow-x: hidden;
-  selection-background-color: #10b981;
-  selection-color: #070a0c;
-  -webkit-tap-highlight-color: transparent;
+/* Width axis of Archivo: packaging type is set wide for names, narrow for data. */
+@utility stretch-wide {
+  font-variation-settings: "wdth" 125;
+}
+@utility stretch-semi {
+  font-variation-settings: "wdth" 112;
+}
+@utility stretch-normal {
+  font-variation-settings: "wdth" 100;
+}
+@utility stretch-narrow {
+  font-variation-settings: "wdth" 75;
+}
+@utility stretch-tight {
+  font-variation-settings: "wdth" 62;
 }
 
-button, a, [role="button"] {
-  touch-action: manipulation;
+@utility gutter {
+  padding-inline: clamp(1rem, 4vw, 3.5rem);
 }
 
-/* Custom glow and glass utilities */
-.glass-panel {
-  background: rgba(13, 20, 24, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+@utility tabular {
+  font-variant-numeric: tabular-nums;
 }
 
-.glass-pill {
-  background: rgba(16, 185, 129, 0.1);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(52, 211, 153, 0.25);
-}
-
-.mint-glow-box {
-  box-shadow: 0 0 35px -8px rgba(16, 185, 129, 0.35);
-}
-
-.mint-glow-text {
-  text-shadow: 0 0 25px rgba(52, 211, 153, 0.45);
-}
-
-/* Pulse and float animations */
-@keyframes pulseGlow {
-  0%, 100% {
-    opacity: 0.4;
-    transform: scale(1);
+@layer base {
+  :root {
+    color-scheme: light;
+    --header-h: 4.25rem;
   }
-  50% {
-    opacity: 0.8;
-    transform: scale(1.05);
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: clip;
+  }
+
+  ::selection {
+    background: var(--color-amber-soft);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-amber-deep);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  button,
+  a,
+  [role="button"] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:not(:disabled),
+  [role="button"] {
+    cursor: pointer;
+  }
+
+  img,
+  canvas {
+    display: block;
+  }
+
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
   }
 }
 
-.animate-pulse-glow {
-  animation: pulseGlow 4s ease-in-out infinite;
+/* Headline "dispensing": lines widen along the wdth axis as they settle. */
+@property --w {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 112;
 }
-
-@keyframes ekgRun {
-  0% {
-    stroke-dashoffset: 600;
+/* Opacity stays at 1 so the headline is readable from the first frame, even if
+   the main thread is busy; only width and position animate. */
+@keyframes dispense {
+  from {
+    transform: translateY(0.18em);
+    --w: 72;
   }
-  100% {
-    stroke-dashoffset: 0;
-  }
-}
-
-.animate-ekg {
-  stroke-dasharray: 600;
-  animation: ekgRun 3s linear infinite;
-}
-
-@keyframes floatGentle {
-  0%, 100% {
-    transform: translateY(0px) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-8px) rotate(1deg);
+  to {
+    transform: none;
+    --w: 112;
   }
 }
-
-.animate-float {
-  animation: floatGentle 5s ease-in-out infinite;
-}
-
-/* Subtle background blueprint grid */
-.bg-medical-grid {
-  background-size: 40px 40px;
-  background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-}
-
-/* Custom dark scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #070a0c;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #10b981;
-}
-
-/* Preloader custom keyframes */
-@keyframes progressShimmer {
-  0% {
-    transform: translateX(-150%);
-  }
-  100% {
-    transform: translateX(250%);
-  }
-}
-
-.animate-progress-shimmer {
-  animation: progressShimmer 1.8s infinite linear;
-}
-
-@keyframes floatMote {
-  0% {
-    transform: translateY(0px) translateX(0px);
+@keyframes fade-rise {
+  from {
     opacity: 0;
+    transform: translateY(12px);
   }
-  20% {
-    opacity: 0.8;
-  }
-  80% {
-    opacity: 0.8;
-  }
-  100% {
-    transform: translateY(-80px) translateX(15px);
-    opacity: 0;
+  to {
+    opacity: 1;
+    transform: none;
   }
 }
-
-.animate-mote-1 {
-  animation: floatMote 4s infinite ease-out;
+.dispense-line {
+  font-variation-settings: "wdth" var(--w);
+  animation: dispense 1.1s var(--ease-out-quart) both;
+}
+.dispense-fade {
+  animation: fade-rise 0.8s var(--ease-out-quart) both;
 }
 
-.animate-mote-2 {
-  animation: floatMote 5.5s infinite ease-out 1.2s;
+/* Lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: clip;
 }
 
-.animate-mote-3 {
-  animation: floatMote 6s infinite ease-out 2.4s;
+/* Security-paper guilloche, drawn as SVG so it scales without pixelation. */
+.guilloche {
+  background-image: url("/textures/guilloche.svg");
+  background-size: 640px auto;
+  background-repeat: repeat;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
